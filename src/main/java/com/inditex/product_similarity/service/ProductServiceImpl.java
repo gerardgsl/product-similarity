@@ -10,17 +10,16 @@ import com.inditex.product_similarity.model.Product;
 @Service
 public class ProductServiceImpl implements ProductService {
     
-    private final ProductClient productClient;
+    private final ProductClient client;
 
-    public ProductServiceImpl(ProductClient productClient) {
-        this.productClient = productClient;
+    public ProductServiceImpl(ProductClient client) {
+        this.client = client;
     }
 
-    @Override
     public List<Product> getSimilarProducts(String productId) {
-        List<String> ids = productClient.getSimilarProductIds(productId);
+        List<String> ids = client.getSimilarProductIds(productId);
         return ids.stream()
-                  .map(productClient::getProductById)
+                  .map(client::getProductById)
                   .collect(Collectors.toList());
     }
 }
