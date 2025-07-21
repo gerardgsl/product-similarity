@@ -8,6 +8,7 @@ import io.github.resilience4j.retry.annotation.Retry;
 import io.github.resilience4j.timelimiter.annotation.TimeLimiter;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import com.inditex.dto.ProductDetail;
@@ -28,6 +29,8 @@ public class ProductServiceImpl implements ProductService {
         this.productMapper = productMapper;
     }
 
+    @Override
+    @Cacheable("similarProducts")
     public List<ProductDetail> getSimilarProducts(String productId) {
         List<String> ids = productClient.getSimilarProductIds(productId);
         return ids.parallelStream()               // llamadas concurrentes
