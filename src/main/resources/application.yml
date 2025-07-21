@@ -1,0 +1,47 @@
+server:
+  port: 5000
+
+spring:
+  application:
+    name: product-similarity
+  cloud:
+    openfeign:
+      client:
+        config:
+          default:
+            connectTimeout: 5000
+            readTimeout: 5000
+            loggerLevel: full
+
+# Logging básico
+logging:
+  level:
+    root: INFO
+    com.inditex: DEBUG
+    org.springframework.cloud.openfeign: DEBUG
+
+# Configuración de Resilience4j
+resilience4j:
+  circuitbreaker:
+    instances:
+      product-api:
+        registerHealthIndicator: true
+        slidingWindowSize: 10
+        minimumNumberOfCalls: 5
+        failureRateThreshold: 50
+        waitDurationInOpenState: 10s
+  retry:
+    instances:
+      product-api:
+        maxAttempts: 3
+        waitDuration: 500ms
+  timelimiter:
+    instances:
+      product-api:
+        timeoutDuration: 2s
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"

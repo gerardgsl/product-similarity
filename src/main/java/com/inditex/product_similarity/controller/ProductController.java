@@ -1,26 +1,31 @@
 package com.inditex.product_similarity.controller;
 
-import java.util.List;
+import com.inditex.api.ProductApi;
+import com.inditex.dto.ProductDetail;
+import com.inditex.product_similarity.service.ProductService;
 
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.inditex.product_similarity.model.Product;
-import com.inditex.product_similarity.service.ProductService;
-
 @RestController
-@RequestMapping("/product")
-public class ProductController {
-    private final ProductService service;
+public class ProductController implements ProductApi {
 
-    public ProductController(ProductService service) {
-        this.service = service;
+    private final ProductService productService;
+
+    public ProductController(ProductService productService)
+    {
+        this.productService = productService;
     }
 
-    @GetMapping("/{productId}/similar")
-    public List<Product> getSimilar(@PathVariable String productId) {
-        return service.getSimilarProducts(productId);
+    @Override
+    public ResponseEntity<Set<ProductDetail>> getProductSimilar(String productId) {
+        Set<ProductDetail> details = new HashSet<>(productService.getSimilarProducts(productId));
+        return ResponseEntity.ok(details);
     }
 }

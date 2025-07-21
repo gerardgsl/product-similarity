@@ -7,9 +7,12 @@ import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.retry.annotation.Retry;
 import io.github.resilience4j.timelimiter.annotation.TimeLimiter;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import com.inditex.dto.ProductDetail;
 import com.inditex.product_similarity.client.ProductClient;
+import com.inditex.product_similarity.mapper.ProductMapper;
 import com.inditex.product_similarity.model.Product;
 
 import java.util.concurrent.CompletableFuture;
@@ -18,12 +21,14 @@ import java.util.concurrent.CompletableFuture;
 public class ProductServiceImpl implements ProductService {
     
     private final ProductClient productClient;
-
-    public ProductServiceImpl(ProductClient client) {
+    private final ProductMapper productMapper;
+    
+    public ProductServiceImpl(ProductClient client, ProductMapper productMapper) {
         this.productClient = client;
+        this.productMapper = productMapper;
     }
 
-    public List<Product> getSimilarProducts(String productId) {
+    public List<ProductDetail> getSimilarProducts(String productId) {
         List<String> ids = productClient.getSimilarProductIds(productId);
         return ids.parallelStream()               // llamadas concurrentes
                   .map(this::getProductSafe)      // devuelve null si falla
@@ -34,14 +39,17 @@ public class ProductServiceImpl implements ProductService {
     @Retry(name = "product-api", fallbackMethod = "fallbackProduct")
     @CircuitBreaker(name = "product-api", fallbackMethod = "fallbackProduct")
     @TimeLimiter(name = "product-api")
-    public CompletableFuture<Product> getProductAsync(String id) {
+    public CompletableFuture<ProductDetail> getProductAsync(String id) {
         // Ejecutamos la llamada Feign en un hilo aparte
-        return CompletableFuture.supplyAsync(() -> productClient.getProductById(id));
+        return CompletableFuture.supplyAsync(() -> {
+        Product product = productClient.getProductById(id);
+        return productMapper.toDto(product);
+    });
     }
 
 
     /** Adaptador síncrono: espera el resultado de getProductAsync o null si falla. */
-    private Product getProductSafe(String id) {
+    private ProductDetail getProductSafe(String id) {
         try {
             return getProductAsync(id).join();  // join() propaga excepciones como unchecked
         } catch (Exception ex) {
@@ -52,7 +60,7 @@ public class ProductServiceImpl implements ProductService {
      /* ----------  Fallbacks  ---------- */
     
      @SuppressWarnings("unused")
-    private CompletableFuture<Product> fallbackProduct(String id, Throwable t) {
+    private CompletableFuture<ProductDetail> fallbackProduct(String id, Throwable t) {
         // Aquí podrías loggear el error o enviar métricas
         return CompletableFuture.completedFuture(null);
     }
