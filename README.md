@@ -10,9 +10,9 @@ This is a Spring Boot REST API developed as part of a backend technical challeng
 - Uses **Feign Client** to call external APIs
 - Handles resilience with **Resilience4j** (`@Retry`, `@CircuitBreaker`, `@TimeLimiter`)
 - Implements basic **in-memory caching** with `@Cacheable`
-- Structured logging with **SLF4J**
-- Includes **unit tests** and **integration tests**
-- Includes **performance tests** with **K6**
+- Implements **API First** design using **OpenAPI 3.0**
+- Auto-generates controller and model classes using **OpenAPI Generator**
+- Full API documentation available via **Swagger UI**
 - Docker support and `docker-compose` for testing
 
 ---
@@ -37,27 +37,34 @@ Returns a list of product details for products similar to the given ID.
 ]
 ```
 
----
+#### Error Responses
 
-## 🛠️ Tech Stack
-
-| Layer       | Technology                         |
-|-------------|------------------------------------|
-| Framework   | Spring Boot 3.2.5                  |
-| HTTP Client | Spring Cloud OpenFeign             |
-| Resilience  | Resilience4j                       |
-| Caching     | Spring Cache (in-memory)           |
-| Build       | Maven                              |
-| Container   | Docker, Docker Compose             |
+- `404 Not Found`: Returned when the original product does not exist or cannot be retrieved from the external service.
 
 ---
 
-## 🧠 Design Decisions
+## 📚 API Documentation
 
-- **OpenFeign** is used for simplicity and easy fallback integration with Resilience4j.
-- **Parallel Streams** are used for performance when fetching multiple similar products concurrently.
-- **Resilience4j** ensures that timeouts and retries are handled cleanly to avoid API cascading failures.
-- **@Cacheable** improves performance on repeated requests for the same product.
+The OpenAPI spec is defined in [`openapi.yml`](src/main/resources/openapi/openapi.yml), and the server implements an **API First** approach.
+
+The specification is validated and the controller/model code is automatically generated via the OpenAPI Maven plugin.
+
+### 🔗 Swagger UI
+
+Once the app is running, you can access the interactive documentation here:
+
+- http://localhost:5000/swagger-ui/index.html
+
+---
+
+## 🧠 Design Decisions & Architecture
+
+- **OpenAPI First**: Promotes a contract-driven design, aligning development and documentation from the start.
+- **Hexagonal Architecture (Ports & Adapters inspired)**: External calls are made via interfaces (e.g., Feign client), allowing the core logic to remain decoupled.
+- **Parallel Streams**: Used for performance to fetch similar product details concurrently.
+- **Resilience Patterns**: Via Resilience4j to ensure robustness against external service failures.
+- **Fallback Methods**: Provide graceful degradation in case of API unavailability.
+- **Caching**: Improves response time for repeated requests.
 
 ---
 
@@ -79,7 +86,6 @@ The app runs on port `5000`.
 
 ---
 
-
 ## 📦 Caching
 
 Caching is enabled for the `getSimilarProducts(productId)` method using Spring's `@Cacheable`. It can be configured to use Redis or Caffeine for production environments.
@@ -88,28 +94,24 @@ Caching is enabled for the `getSimilarProducts(productId)` method using Spring's
 
 ## 📌 Improvements
 
-- Add Swagger/OpenAPI documentation
+- Add Swagger/OpenAPI documentation ✅
 - Replace in-memory cache with Redis
 - Extend resilience configuration via `application.yml`
-- Add circuit breaker metrics 
+- Add circuit breaker metrics
 
 ---
 
-## Future Improvements
+## 📈 Future Improvements
 
 The application could be improved in the following ways:
 
-- **Improve Error Handling**: Provide more specific HTTP responses for different error cases (e.g. 404 when a product is not found).
-- **Add Unit and Integration Tests**: Increase test coverage, especially for edge cases and error scenarios.
-- **Implement OpenAPI Documentation**: Generate and expose API documentation using Swagger.
+- **Add Tests**: Add unit and integration test coverage, especially for edge cases and error scenarios.
 - **Add Observability**:
-  - Structured logs using JSON format.
-  - Integration with centralized logging tools like ELK or Grafana Loki.
-  - Distributed tracing support (e.g. OpenTelemetry).
-- **Make External Product Service Configurable**: Move `localhost:3001` to a configuration file or environment variable.
-- **Dockerize the App**: Add a Dockerfile and docker-compose setup for easy deployment.
-- **Rate Limiting & Security**: Apply rate limiting, authentication, and input validation.
+  - Structured logs using JSON format
+  - Integration with centralized logging tools like ELK or Grafana Loki
+  - Distributed tracing (e.g. OpenTelemetry)
+- **Add Rate Limiting and Security**: Apply rate limiting, authentication, and authorization.
 - **Add Metrics Endpoint**: Use Micrometer to expose Prometheus-compatible metrics.
-- **Deploy to Cloud**: Add a deployment pipeline to a cloud platform (e.g. AWS, GCP, or Azure).
+- **Deploy to Cloud**: Add CI/CD pipeline and deploy to AWS/GCP/Azure.
 
-Feel free to open an issue or contribute with a pull request if you'd like to help with any of these!
+---
