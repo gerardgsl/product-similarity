@@ -123,6 +123,22 @@ These results clearly show how the application benefits from:
 
 ---
 
+### 📚 Benchmarking Source
+
+The performance and resilience tests for this application were implemented based on the guidelines provided in the following repository:
+
+👉 [dalogax/backendDevTest](https://github.com/dalogax/backendDevTest)
+
+This includes:
+
+- Load and stress testing using **K6**
+- Simulation of failure scenarios: `normal`, `notFound`, `error`, `slow`, and `verySlow`
+- Use of `docker-compose` to orchestrate the application, K6, and an InfluxDB/Grafana stack
+
+By following this approach, we ensured that performance and resilience could be quantitatively measured and compared before and after implementing improvements such as caching and fallback strategies.
+
+---
+
 ## 📌 Improvements
 
 - Add Swagger/OpenAPI documentation ✅
