@@ -92,6 +92,37 @@ Caching is enabled for the `getSimilarProducts(productId)` method using Spring's
 
 ---
 
+## 📊 Performance Benchmarking
+
+To evaluate the impact of applying performance and resilience techniques (Resilience4j, caching, and parallelism), load tests were executed using **K6** under the same stress conditions (200 virtual users, 5 scenarios).
+
+| Metric                        | With Improvements     | Without Improvements     |
+|------------------------------|------------------------|---------------------------|
+| Total Requests               | `19,748`               | `6,282`                   |
+| Avg. Request Duration        | `18.01ms`              | `473.52ms`                |
+| Max. Request Duration        | `311ms`                | `19.07s`                  |
+| Avg. Iteration Duration      | `518.99ms`             | `971.17ms`                |
+| Interrupted Iterations       | `600`                  | `987`                     |
+| Timeouts / Connection Errors | ❌ None                | ⚠️ Occasionally appeared  |
+
+These results clearly show how the application benefits from:
+
+- ✅ Resilience4j circuit breaking, retries and time limiting  
+- ✅ Parallel product detail fetching  
+- ✅ In-memory caching  
+- ✅ Timeout configuration for external calls
+
+### Test Result: With Improvements
+![With Improvements](docs/performance/with-improvements.png)
+
+### Test Result: Without Improvements
+![Without Improvements](docs/performance/without-improvements.png)
+
+> 🧪 Load testing was executed using [K6](https://k6.io).  
+> 🔄 Scenarios included: normal responses, 404 errors, failures, and slow/very slow backend simulations.
+
+---
+
 ## 📌 Improvements
 
 - Add Swagger/OpenAPI documentation ✅
