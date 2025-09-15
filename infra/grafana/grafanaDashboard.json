@@ -1,0 +1,108 @@
+{
+  "annotations": {"list":[{"builtIn":1,"datasource":{"type":"grafana","uid":"grafana"},"enable":true,"hide":true,"iconColor":"rgba(0, 211, 255, 1)","name":"Annotations & Alerts","type":"dashboard"}]},
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": null,
+  "iteration": 1,
+  "links": [],
+  "liveNow": false,
+  "panels": [
+    {
+      "type": "stat",
+      "title": "RPS (1m)",
+      "id": 1,
+      "gridPos": {"h": 6, "w": 6, "x": 0, "y": 0},
+      "targets": [
+        {"expr": "sum(rate(http_server_requests_seconds_count[1m]))","legendFormat":"RPS","refId":"A"}
+      ],
+      "options": {"reduceOptions":{"calcs":["lastNotNull"],"fields":"","values":false},"orientation":"auto","colorMode":"value","graphMode":"none","justifyMode":"auto"}
+    },
+    {
+      "type": "stat",
+      "title": "Errores 5xx (5m)",
+      "id": 2,
+      "gridPos": {"h": 6, "w": 6, "x": 6, "y": 0},
+      "targets": [
+        {"expr": "sum(rate(http_server_requests_seconds_count{status=~\"5..\"}[5m]))","legendFormat":"5xx","refId":"A"}
+      ],
+      "options": {"reduceOptions":{"calcs":["lastNotNull"],"fields":"","values":false}}
+    },
+    {
+      "type": "stat",
+      "title": "p95 Latencia (ms)",
+      "id": 3,
+      "gridPos": {"h": 6, "w": 6, "x": 12, "y": 0},
+      "targets": [
+        {"expr": "1000*histogram_quantile(0.95, sum(rate(http_server_requests_seconds_bucket[5m])) by (le))","legendFormat":"p95","refId":"A"}
+      ],
+      "options": {"reduceOptions":{"calcs":["lastNotNull"],"fields":"","values":false}}
+    },
+    {
+      "type": "timeseries",
+      "title": "Latencia p95/p99 (ms)",
+      "id": 4,
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 6},
+      "targets": [
+        {"expr":"1000*histogram_quantile(0.95, sum(rate(http_server_requests_seconds_bucket[5m])) by (le))","legendFormat":"p95","refId":"A"},
+        {"expr":"1000*histogram_quantile(0.99, sum(rate(http_server_requests_seconds_bucket[5m])) by (le))","legendFormat":"p99","refId":"B"}
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "RPS por endpoint",
+      "id": 5,
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 6},
+      "targets": [
+        {"expr":"sum(rate(http_server_requests_seconds_count[1m])) by (uri,method,status)","legendFormat":"{{method}} {{uri}} {{status}}","refId":"A"}
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "Circuit breaker OPEN",
+      "id": 6,
+      "gridPos": {"h": 6, "w": 6, "x": 0, "y": 14},
+      "targets": [
+        {"expr":"sum(resilience4j_circuitbreaker_state{state=\"open\"})","legendFormat":"open","refId":"A"}
+      ],
+      "options": {"reduceOptions":{"calcs":["lastNotNull"],"fields":"","values":false}}
+    },
+    {
+      "type": "timeseries",
+      "title": "Estado circuit breaker",
+      "id": 7,
+      "gridPos": {"h": 6, "w": 12, "x": 6, "y": 14},
+      "targets": [
+        {"expr":"resilience4j_circuitbreaker_state{name=\"product-api\"}","legendFormat":"{{state}}","refId":"A"}
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "JVM Heap usado (MB)",
+      "id": 8,
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 20},
+      "targets": [
+        {"expr":"sum(jvm_memory_used_bytes{area=\"heap\"})/1024/1024","legendFormat":"heap used","refId":"A"}
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "CPU proceso",
+      "id": 9,
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 20},
+      "targets": [
+        {"expr":"process_cpu_usage","legendFormat":"proc cpu","refId":"A"}
+      ]
+    }
+  ],
+  "schemaVersion": 39,
+  "style": "dark",
+  "tags": ["spring-boot","micrometer","resilience4j"],
+  "templating": {"list":[]},
+  "time": {"from":"now-15m","to":"now"},
+  "timepicker": {},
+  "timezone": "",
+  "title": "Product Similarity — Observability",
+  "version": 1,
+  "weekStart": ""
+}
