@@ -1,0 +1,11 @@
+global:
+  scrape_interval: 5s
+
+scrape_configs:
+  - job_name: "product-similarity"
+    metrics_path: "/actuator/prometheus"
+    static_configs:
+      - targets:
+          - "product-similarity:5000"
+        labels:
+          application: "product-similarity-api"

@@ -25,6 +25,8 @@
         <spring-cloud.version>2023.0.1</spring-cloud.version>
         <maven.build.timestamp.format>yyyy-MM-dd'T'HH:mm:ss'Z'</maven.build.timestamp.format>
         <project.build.outputTimestamp>${maven.build.timestamp}</project.build.outputTimestamp>
+        <logstash-logback-encoder.version>7.4</logstash-logback-encoder.version>
+
     </properties>
 
     <dependencyManagement>
@@ -132,8 +134,9 @@
             <artifactId>spring-boot-starter-actuator</artifactId>
         </dependency>
         <dependency>
-            <groupId>io.micrometer</groupId>
-            <artifactId>micrometer-registry-prometheus</artifactId>
+            <groupId>net.logstash.logback</groupId>
+            <artifactId>logstash-logback-encoder</artifactId>
+            <version>${logstash-logback-encoder.version}</version>
         </dependency>
     </dependencies>
 

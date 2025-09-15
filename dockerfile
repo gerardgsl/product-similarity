@@ -1,13 +1,23 @@
-FROM eclipse-temurin:17-jdk-alpine
-
-# Crea el directorio de la app
+# ====== Build stage ======
+FROM maven:3.9-eclipse-temurin-21 AS build
 WORKDIR /app
 
-# Copia el jar construido por Maven
-COPY target/product-similarity-0.0.1-SNAPSHOT.jar app.jar
+# Copiamos el pom primero para cachear dependencias
+COPY pom.xml .
+RUN mvn -B -q -e -DskipTests dependency:go-offline
 
-# Expone el puerto en el que corre Spring Boot
+# Ahora el código
+COPY src ./src
+# Si tu OpenAPI genera código, asegúrate de incluir lo necesario
+RUN mvn -B -q -DskipTests package
+
+# ====== Runtime stage (slim JRE) ======
+FROM eclipse-temurin:21-jre AS runtime
+ENV JAVA_OPTS="-XX:MaxRAMPercentage=75"
+WORKDIR /app
+
+# Copiamos el jar final (ajusta nombre si tienes otro finalName)
+COPY --from=build /app/target/*-SNAPSHOT.jar /app/app.jar
+
 EXPOSE 5000
-
-# Ejecuta la aplicación
-ENTRYPOINT ["java", "-jar", "app.jar"]
+ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -jar /app/app.jar"]

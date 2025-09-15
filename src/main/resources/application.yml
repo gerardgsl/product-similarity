@@ -19,7 +19,10 @@ logging:
     root: INFO
     com.inditex: DEBUG
     org.springframework.cloud.openfeign: DEBUG
-
+  structured:
+    format:
+      console: logstash     # o ecs / gelf
+    arguments: true         # (opcional) añade key/values de logs como JSON
 # Configuración de Resilience4j
 resilience4j:
   circuitbreaker:
@@ -48,7 +51,12 @@ management:
   endpoint:
     health:
       show-details: always
-
+  metrics:
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true
+      percentiles:
+        http.server.requests: 0.5, 0.9, 0.95, 0.99
 springdoc:
   swagger-ui:
     path: /swagger-ui.html
