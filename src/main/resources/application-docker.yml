@@ -1,0 +1,11 @@
+spring:
+  config:
+    activate:
+      on-profile: docker
+
+server:
+  port: 5000
+
+product:
+  api:
+    base-url: ${PRODUCT_API_BASE_URL:http://simulado}

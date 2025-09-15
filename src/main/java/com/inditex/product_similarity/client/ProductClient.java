@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 
 import com.inditex.product_similarity.model.Product;
 
-@FeignClient(name = "productClient", url = "http://localhost:3001")
+@FeignClient(name = "productClient", url = "${product.api.base-url}")
 public interface ProductClient {
     @GetMapping("/product/{productId}/similarids")
     List<String> getSimilarProductIds(@PathVariable String productId);
