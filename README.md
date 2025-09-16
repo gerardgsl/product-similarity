@@ -126,7 +126,7 @@ It can be configured to use Redis or Caffeine for production environments.
   ![Grafana Dashboard](docs/screenshots/grafana.png)
 - Structured logs in JSON format for easier aggregation with ELK or Loki.
 
-More details in [docs/observability-load.md](docs/observability-load.md).
+More details in [docs/observability-load.md](docs/performance/observability-load.md).
 
 ---
 
