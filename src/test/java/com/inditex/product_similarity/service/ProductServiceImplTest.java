@@ -1,0 +1,103 @@
+package com.inditex.product_similarity.service;
+
+import com.inditex.dto.ProductDetail;
+import com.inditex.product_similarity.client.ProductClient;
+import com.inditex.product_similarity.exception.ProductNotFoundException;
+import com.inditex.product_similarity.mapper.ProductMapper;
+import com.inditex.product_similarity.model.Product;
+import feign.FeignException;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentMatchers;
+
+import java.lang.reflect.Method;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
+
+class ProductServiceImplTest {
+
+    private ProductClient productClient;
+    private ProductMapper productMapper;
+    private ProductServiceImpl productService;
+
+    @BeforeEach
+    void setUp() {
+        productClient = mock(ProductClient.class);
+        productMapper = mock(ProductMapper.class);
+        productService = new ProductServiceImpl(productClient, productMapper);
+    }
+
+    @Test
+    void getSimilarProducts_returnsProductDetails_whenProductsExist() {
+        String productId = "1";
+        List<String> similarIds = Arrays.asList("2", "3");
+        Product product2 = new Product();
+        Product product3 = new Product();
+        ProductDetail detail2 = new ProductDetail();
+        ProductDetail detail3 = new ProductDetail();
+
+        when(productClient.getProductById(productId)).thenReturn(new Product());
+        when(productClient.getSimilarProductIds(productId)).thenReturn(similarIds);
+        when(productClient.getProductById("2")).thenReturn(product2);
+        when(productClient.getProductById("3")).thenReturn(product3);
+        when(productMapper.toDto(product2)).thenReturn(detail2);
+        when(productMapper.toDto(product3)).thenReturn(detail3);
+
+        List<ProductDetail> result = productService.getSimilarProducts(productId);
+
+        assertEquals(2, result.size());
+        assertTrue(result.contains(detail2));
+        assertTrue(result.contains(detail3));
+    }
+
+    @Test
+    void getSimilarProducts_throwsProductNotFoundException_whenProductNotFound() {
+        String productId = "notfound";
+        when(productClient.getProductById(productId)).thenThrow(FeignException.NotFound.class);
+
+        assertThrows(ProductNotFoundException.class, () -> productService.getSimilarProducts(productId));
+    }
+
+    @Test
+    void getSimilarProducts_returnsEmptyList_whenNoSimilarProducts() {
+        String productId = "1";
+        when(productClient.getProductById(productId)).thenReturn(new Product());
+        when(productClient.getSimilarProductIds(productId)).thenReturn(Collections.emptyList());
+
+        List<ProductDetail> result = productService.getSimilarProducts(productId);
+
+        assertTrue(result.isEmpty());
+    }
+
+    @Test
+    void getProductAsync_returnsProductDetail_whenProductExists() throws Exception {
+        String id = "2";
+        Product product = new Product();
+        ProductDetail detail = new ProductDetail();
+
+        when(productClient.getProductById(id)).thenReturn(product);
+        when(productMapper.toDto(product)).thenReturn(detail);
+
+        CompletableFuture<ProductDetail> future = productService.getProductAsync(id);
+
+        assertEquals(detail, future.get());
+    }
+
+    @Test
+    void getProductAsync_returnsNull_whenFallbackTriggered() throws Exception {
+        String id = "fail";
+        when(productClient.getProductById(id)).thenThrow(new RuntimeException("error"));
+
+        Method fallbackMethod = productService.getClass().getDeclaredMethod("fallbackProduct", String.class, Throwable.class);
+        fallbackMethod.setAccessible(true);
+        CompletableFuture<ProductDetail> fallback = (CompletableFuture<ProductDetail>) fallbackMethod.invoke(productService, id, new RuntimeException("error"));
+
+        assertNotNull(fallback);
+        assertNull(fallback.get());
+    }
+}

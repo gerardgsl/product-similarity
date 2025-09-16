@@ -1,6 +1,23 @@
 # 🛍️ Product Similarity API
 
-This is a Spring Boot REST API developed as part of a backend technical challenge. The API provides details of similar products based on a given product ID, consuming data from an external service.
+This is a Spring Boot REST API App.  
+The service provides **similar product recommendations**: given a product ID, it returns the details of all similar products.  
+
+It acts as an **orchestrator** between the frontend and the data source (**Simulado service**), so the frontend only needs a single request instead of multiple calls.
+
+---
+
+## 📐 Architecture
+
+```text
+Frontend/Test → Product-Similarity → Simulado
+```
+
+- **Simulado**: mock service that stores product data and similar IDs.  
+- **Product-Similarity**: microservice that receives a product ID, retrieves similar IDs from Simulado, fetches details for each product, and returns the full list.  
+- **Frontend**: only calls Product-Similarity once and gets the complete result.  
+
+![Architecture Diagram](docs/architecture.png)
 
 ---
 
@@ -13,7 +30,11 @@ This is a Spring Boot REST API developed as part of a backend technical challeng
 - Implements **API First** design using **OpenAPI 3.0**
 - Auto-generates controller and model classes using **OpenAPI Generator**
 - Full API documentation available via **Swagger UI**
-- Docker support and `docker-compose` for testing
+- **Structured JSON logs** with Logstash encoder
+- **Micrometer + Prometheus metrics** exposed at `/actuator/prometheus`
+- **Grafana dashboards** for metrics visualization
+- Unit and integration tests with **JUnit 5 + Mockito**
+- Docker support and `docker-compose` for testing and monitoring
 
 ---
 
@@ -55,16 +76,19 @@ Once the app is running, you can access the interactive documentation here:
 
 - http://localhost:5000/swagger-ui/index.html
 
+
+
 ---
 
 ## 🧠 Design Decisions & Architecture
 
-- **OpenAPI First**: Promotes a contract-driven design, aligning development and documentation from the start.
-- **Hexagonal Architecture (Ports & Adapters inspired)**: External calls are made via interfaces (e.g., Feign client), allowing the core logic to remain decoupled.
-- **Parallel Streams**: Used for performance to fetch similar product details concurrently.
-- **Resilience Patterns**: Via Resilience4j to ensure robustness against external service failures.
-- **Fallback Methods**: Provide graceful degradation in case of API unavailability.
-- **Caching**: Improves response time for repeated requests.
+- **OpenAPI First**: contract-driven design aligning development and documentation.
+- **Hexagonal Architecture**: external calls abstracted via interfaces (Feign clients).
+- **Parallel Streams**: to fetch similar product details concurrently.
+- **Resilience Patterns**: retries, circuit breakers, and timeouts with Resilience4j.
+- **Fallback Methods**: for graceful degradation.
+- **Caching**: improves response time for repeated requests.
+- **Observability**: metrics, logs and dashboards for better monitoring.
 
 ---
 
@@ -72,8 +96,9 @@ Once the app is running, you can access the interactive documentation here:
 
 ### Prerequisites
 
-- Java 17+
+- Java 21
 - Maven
+- Docker & Docker Compose (for full stack)
 
 ### Build and Run
 
@@ -88,13 +113,42 @@ The app runs on port `5000`.
 
 ## 📦 Caching
 
-Caching is enabled for the `getSimilarProducts(productId)` method using Spring's `@Cacheable`. It can be configured to use Redis or Caffeine for production environments.
+Caching is enabled for the `getSimilarProducts(productId)` method using Spring's `@Cacheable`.  
+It can be configured to use Redis or Caffeine for production environments.
+
+---
+
+## 📈 Observability
+
+- **Metrics** available at:  
+  - http://localhost:5000/actuator/prometheus
+- **Grafana dashboards** for JVM, HTTP requests, and circuit breakers:  
+  ![Grafana Dashboard](docs/screenshots/grafana.png)
+- Structured logs in JSON format for easier aggregation with ELK or Loki.
+
+More details in [docs/observability-load.md](docs/observability-load.md).
+
+---
+
+## 🧪 Testing
+
+The project includes unit and integration tests with **JUnit 5** and **Mockito**:
+
+- Controller: ✅ 100% coverage  
+- Mapper: ✅ 100% coverage  
+- Service: ~90% coverage  
+
+Run all tests with:
+
+```bash
+mvn test
+```
 
 ---
 
 ## 📊 Performance Benchmarking
 
-To evaluate the impact of applying performance and resilience techniques (Resilience4j, caching, and parallelism), load tests were executed using **K6** under the same stress conditions (200 virtual users, 5 scenarios).
+To evaluate the impact of performance and resilience techniques, load tests were executed using **K6** under the same stress conditions (200 virtual users, 5 scenarios).
 
 | Metric                        | With Improvements     | Without Improvements     |
 |------------------------------|------------------------|---------------------------|
@@ -105,60 +159,30 @@ To evaluate the impact of applying performance and resilience techniques (Resili
 | Interrupted Iterations       | `600`                  | `987`                     |
 | Timeouts / Connection Errors | ❌ None                | ⚠️ Occasionally appeared  |
 
-These results clearly show how the application benefits from:
-
-- ✅ Resilience4j circuit breaking, retries and time limiting  
-- ✅ Parallel product detail fetching  
-- ✅ In-memory caching  
-- ✅ Timeout configuration for external calls
-
 ### Test Result: With Improvements
 ![With Improvements](docs/performance/with-improvements.png)
 
 ### Test Result: Without Improvements
 ![Without Improvements](docs/performance/without-improvements.png)
 
-> 🧪 Load testing was executed using [K6](https://k6.io).  
-> 🔄 Scenarios included: normal responses, 404 errors, failures, and slow/very slow backend simulations.
-
----
-
-### 📚 Benchmarking Source
-
-The performance and resilience tests for this application were implemented based on the guidelines provided in the following repository:
-
-👉 [dalogax/backendDevTest](https://github.com/dalogax/backendDevTest)
-
-This includes:
-
-- Load and stress testing using **K6**
-- Simulation of failure scenarios: `normal`, `notFound`, `error`, `slow`, and `verySlow`
-- Use of `docker-compose` to orchestrate the application, K6, and an InfluxDB/Grafana stack
-
-By following this approach, we ensured that performance and resilience could be quantitatively measured and compared before and after implementing improvements such as caching and fallback strategies.
-
 ---
 
 ## 📌 Improvements
 
 - Add Swagger/OpenAPI documentation ✅
-- Replace in-memory cache with Redis
+- Add structured logs ✅
+- Add Prometheus/Grafana observability ✅
 - Extend resilience configuration via `application.yml`
+- Replace in-memory cache with Redis
 - Add circuit breaker metrics
 
 ---
 
 ## 📈 Future Improvements
 
-The application could be improved in the following ways:
-
-- **Add Tests**: Add unit and integration test coverage, especially for edge cases and error scenarios.
-- **Add Observability**:
-  - Structured logs using JSON format
-  - Integration with centralized logging tools like ELK or Grafana Loki
-  - Distributed tracing (e.g. OpenTelemetry)
-- **Add Rate Limiting and Security**: Apply rate limiting, authentication, and authorization.
-- **Add Metrics Endpoint**: Use Micrometer to expose Prometheus-compatible metrics.
-- **Deploy to Cloud**: Add CI/CD pipeline and deploy to AWS/GCP/Azure.
+- **Enhance Observability**:
+  - Centralized logging with ELK or Grafana Loki
+- **Add Rate Limiting and Security**: authentication, authorization and throttling.
+- **Cloud Deployment**: CI/CD pipelines and deploy to AWS/GCP/Azure.
 
 ---

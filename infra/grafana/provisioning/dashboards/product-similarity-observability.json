@@ -1,0 +1,60 @@
+{
+"annotations": {"list": [{"builtIn": 1, "datasource": {"type": "grafana", "uid": "grafana"}, "enable": true, "hide": true, "iconColor": "rgba(0, 211, 255, 1)", "name": "Annotations & Alerts", "type": "dashboard"}]},
+"editable": true,
+"fiscalYearStartMonth": 0,
+"graphTooltip": 0,
+"links": [],
+"liveNow": false,
+"panels": [
+{"type":"stat","title":"RPS (1m)","id":1,"gridPos":{"h":6,"w":6,"x":0,"y":0},"targets":[{"expr":"sum(rate(http_server_requests_seconds_count[1m]))","legendFormat":"RPS","refId":"A"}],"options":{"reduceOptions":{"calcs":["lastNotNull"],"values":false}}},
+{"type":"stat","title":"Error rate % (5xx / total)","id":2,"gridPos":{"h":6,"w":6,"x":6,"y":0},"targets":[{"expr":"100 * (sum(rate(http_server_requests_seconds_count{status=~\"5..\"}[5m])) / sum(rate(http_server_requests_seconds_count[5m])))","legendFormat":"error%","refId":"A"}],"options":{"reduceOptions":{"calcs":["lastNotNull"],"values":false}}},
+{"type":"stat","title":"p95 Latencia (ms)","id":3,"gridPos":{"h":6,"w":6,"x":12,"y":0},"targets":[{"expr":"1000*histogram_quantile(0.95, sum(rate(http_server_requests_seconds_bucket[5m])) by (le))","legendFormat":"p95","refId":"A"}],"options":{"reduceOptions":{"calcs":["lastNotNull"],"values":false}}},
+{"type":"stat","title":"p99 Latencia (ms)","id":4,"gridPos":{"h":6,"w":6,"x":18,"y":0},"targets":[{"expr":"1000*histogram_quantile(0.99, sum(rate(http_server_requests_seconds_bucket[5m])) by (le))","legendFormat":"p99","refId":"A"}],"options":{"reduceOptions":{"calcs":["lastNotNull"],"values":false}}},
+
+
+{"type":"timeseries","title":"RPS por status (1m)","id":5,"gridPos":{"h":8,"w":12,"x":0,"y":6},"targets":[
+{"expr":"sum(rate(http_server_requests_seconds_count[1m])) by (status)","legendFormat":"{{status}}","refId":"A"}
+]},
+
+
+{"type":"timeseries","title":"Latencia servidor p50/p95/p99 (ms)","id":6,"gridPos":{"h":8,"w":12,"x":12,"y":6},"targets":[
+{"expr":"1000*histogram_quantile(0.50, sum(rate(http_server_requests_seconds_bucket[5m])) by (le))","legendFormat":"p50","refId":"A"},
+{"expr":"1000*histogram_quantile(0.95, sum(rate(http_server_requests_seconds_bucket[5m])) by (le))","legendFormat":"p95","refId":"B"},
+{"expr":"1000*histogram_quantile(0.99, sum(rate(http_server_requests_seconds_bucket[5m])) by (le))","legendFormat":"p99","refId":"C"}
+]},
+
+
+{"type":"timeseries","title":"RPS por endpoint (método/uri/status)","id":7,"gridPos":{"h":8,"w":24,"x":0,"y":14},"targets":[
+{"expr":"sum(rate(http_server_requests_seconds_count[1m])) by (method,uri,status)","legendFormat":"{{method}} {{uri}} {{status}}","refId":"A"}
+]},
+
+
+{"type":"stat","title":"Circuit breaker OPEN","id":8,"gridPos":{"h":6,"w":6,"x":0,"y":22},"targets":[{"expr":"sum(resilience4j_circuitbreaker_state{state=\"open\"})","legendFormat":"open","refId":"A"}]},
+{"type":"timeseries","title":"Estado circuit breaker (product-api)","id":9,"gridPos":{"h":6,"w":12,"x":6,"y":22},"targets":[{"expr":"resilience4j_circuitbreaker_state{name=\"product-api\"}","legendFormat":"{{state}}","refId":"A"}]},
+{"type":"timeseries","title":"Retries por tipo","id":10,"gridPos":{"h":6,"w":6,"x":18,"y":22},"targets":[{"expr":"sum(rate(resilience4j_retry_calls_total[1m])) by (kind)","legendFormat":"{{kind}}","refId":"A"}]},
+
+
+{"type":"timeseries","title":"Timeouts (TimeLimiter)","id":11,"gridPos":{"h":6,"w":8,"x":0,"y":28},"targets":[{"expr":"sum(rate(resilience4j_timelimiter_calls_total{kind=\"timeout\"}[1m]))","legendFormat":"timeouts/min","refId":"A"}]},
+{"type":"timeseries","title":"Cache hit ratio (Caffeine)","id":12,"gridPos":{"h":6,"w":8,"x":8,"y":28},"targets":[{"expr":"sum(rate(cache_gets_total{result=\"hit\"}[5m])) / sum(rate(cache_gets_total[5m]))","legendFormat":"hit_ratio","refId":"A"}]},
+{"type":"timeseries","title":"Latencia cliente (Feign→simulado) p95 (ms)","id":13,"gridPos":{"h":6,"w":8,"x":16,"y":28},"targets":[{"expr":"1000*histogram_quantile(0.95, sum(rate(http_client_requests_seconds_bucket[5m])) by (le))","legendFormat":"client p95","refId":"A"}]},
+
+
+{"type":"timeseries","title":"Heap usado (MB)","id":14,"gridPos":{"h":6,"w":8,"x":0,"y":34},"targets":[{"expr":"sum(jvm_memory_used_bytes{area=\"heap\"})/1024/1024","legendFormat":"heap used","refId":"A"}]},
+{"type":"timeseries","title":"GC pausa (max, s)","id":15,"gridPos":{"h":6,"w":8,"x":8,"y":34},"targets":[{"expr":"max(jvm_gc_pause_seconds_max)","legendFormat":"gc max","refId":"A"}]},
+{"type":"timeseries","title":"CPU proceso","id":16,"gridPos":{"h":6,"w":8,"x":16,"y":34},"targets":[{"expr":"process_cpu_usage","legendFormat":"proc cpu","refId":"A"}]},
+
+
+{"type":"timeseries","title":"2xx vs 4xx vs 5xx","id":17,"gridPos":{"h":8,"w":12,"x":0,"y":40},"targets":[{"expr":"sum(rate(http_server_requests_seconds_count[1m])) by (status)","legendFormat":"{{status}}","refId":"A"}]},
+{"type":"stat","title":"Uptime (min)","id":18,"gridPos":{"h":8,"w":12,"x":12,"y":40},"targets":[{"expr":"process_uptime_seconds/60","legendFormat":"uptime","refId":"A"}],"options":{"reduceOptions":{"calcs":["lastNotNull"],"values":false}}}
+],
+"schemaVersion": 39,
+"style": "dark",
+"tags": ["spring-boot","micrometer","resilience4j","caffeine"],
+"templating": {"list": []},
+"time": {"from": "now-30m", "to": "now"},
+"timepicker": {},
+"timezone": "",
+"title": "Product Similarity — Observability+",
+"version": 1,
+"weekStart": ""
+}
